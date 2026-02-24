@@ -6,21 +6,18 @@
     <title>Exam Information Display</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-      // Explicitly configure Tailwind to use the 'class' strategy for dark mode.
       tailwind.config = {
         darkMode: 'class',
       }
     </script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&display=swap" rel="stylesheet">
     <style>
-        /* Custom styles for better aesthetics and functionality */
         body {
             font-family: 'Inter', sans-serif;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
 
-        /* Styling for the contenteditable fields */
         [contenteditable="true"] {
             outline: none;
             padding: 4px 8px;
@@ -41,18 +38,14 @@
             background-color: #1f2937;
         }
 
-        /* --- Styles for the Toilet Stop Sign --- */
-
-        /* The container for the sign, sized appropriately for the layout */
+        /* --- Toilet Sign Styles --- */
         .sign-container {
             position: relative;
-            width: 100px; /* Reduced size */
-            height: 100px; /* Reduced size */
+            width: 100px;
+            height: 100px;
             display: grid;
             place-items: center;
         }
-
-        /* The octagon shape using clip-path */
         .octagon {
             width: 100%;
             height: 100%;
@@ -60,32 +53,78 @@
             place-items: center;
             clip-path: polygon(29.29% 0%, 70.71% 0%, 100% 29.29%, 100% 70.71%, 70.71% 100%, 29.29% 100%, 0% 70.71%, 0% 29.29%);
         }
-
-        /* The white outline element */
         .outline {
             background-color: white;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
         }
-        .dark .outline {
-             background-color: #e5e7eb; /* Slightly off-white for dark mode */
-        }
-
-        /* The inner red part of the sign */
+        .dark .outline { background-color: #e5e7eb; }
         .inner-sign {
             position: absolute;
-            width: 95%; /* Slightly smaller to create border effect */
+            width: 95%;
             height: 95%;
-            background-color: #dc2626; /* Vibrant red */
+            background-color: #dc2626;
         }
-
-        /* Styling for the text inside the sign */
         .sign-text {
             color: white;
             font-weight: 900;
-            font-size: 20px; /* Reduced font size */
+            font-size: 20px;
             text-align: center;
             letter-spacing: 0.05em;
-            user-select: none; /* Prevents text selection */
+            z-index: 2;
+        }
+
+        /* --- 15 Mins Indicator Styles --- */
+        .timer-mini {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        .circle-bg {
+            fill: none;
+            stroke: #e2e8f0;
+            stroke-width: 15;
+        }
+        .dark .circle-bg { stroke: #334155; }
+        .circle-progress {
+            fill: none;
+            stroke: #f59e0b;
+            stroke-width: 15;
+            stroke-linecap: round;
+            stroke-dasharray: 440;
+            stroke-dashoffset: 330;
+            transform: rotate(-90deg);
+            transform-origin: center;
+        }
+        .timer-content {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            line-height: 1;
+        }
+        .timer-num {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #1e293b;
+        }
+        .dark .timer-num { color: white; }
+        .timer-label {
+            font-size: 0.6rem;
+            font-weight: 700;
+            color: #f59e0b;
+            text-transform: uppercase;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+            100% { transform: scale(1); }
+        }
+        .urgent-pulse {
+            animation: pulse 2s infinite ease-in-out;
         }
     </style>
 </head>
@@ -93,31 +132,18 @@
 
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 md:p-10 text-center flex flex-col justify-start w-full h-full transition-colors duration-300 relative">
 
-        <!-- Buttons Container -->
-        <div class="absolute top-4 right-4 md:top-6 md:right-6 z-10 flex items-center space-x-2">
-            <!-- Fullscreen Button -->
-            <button id="fullscreen-button" type="button" title="Toggle Fullscreen" class="text-gray-800 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-2.5">
-                <svg id="fullscreen-enter-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
-                </svg>
-                <svg id="fullscreen-exit-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 hidden">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5M15 15l5.25 5.25" />
-                </svg>
+        <!-- Controls -->
+        <div class="absolute top-4 right-4 z-10 flex space-x-2">
+            <button id="fullscreen-button" class="text-gray-800 dark:text-gray-100 p-2.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg">
+                <svg id="fullscreen-enter-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" /></svg>
+                <svg id="fullscreen-exit-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-6 h-6 hidden"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5M15 15l5.25 5.25" /></svg>
             </button>
-            <!-- Save Button -->
-            <button id="save-button" type="button" title="Save as HTML" class="text-gray-800 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-2.5">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                </svg>
+            <button id="save-button" class="text-gray-800 dark:text-gray-100 p-2.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
             </button>
-            <!-- Theme Toggle Button -->
-            <button id="theme-toggle" type="button" title="Toggle Theme" class="text-gray-800 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-2.5">
-                <svg id="theme-toggle-dark-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 hidden">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
-                </svg>
-                <svg id="theme-toggle-light-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 hidden">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.95-4.243l-1.59-1.591M3 12H5.25m.386-6.364l1.591 1.591M12 12a2.25 2.25 0 00-2.25 2.25c0 1.357.863 2.51 2.011 2.87.52.138 1.04.138 1.56 0 1.148-.36 2.011-1.513 2.011-2.87a2.25 2.25 0 00-2.25-2.25z" />
-                </svg>
+            <button id="theme-toggle" class="text-gray-800 dark:text-gray-100 p-2.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg">
+                <svg id="theme-toggle-dark-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-6 h-6 hidden"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" /></svg>
+                <svg id="theme-toggle-light-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-6 h-6 hidden"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.95-4.243l-1.59-1.591M3 12H5.25m.386-6.364l1.591 1.591M12 12a2.25 2.25 0 00-2.25 2.25c0 1.357.863 2.51 2.011 2.87.52.138 1.04.138 1.56 0 1.148-.36 2.011-1.513 2.011-2.87a2.25 2.25 0 00-2.25-2.25z" /></svg>
             </button>
         </div>
 
@@ -128,38 +154,42 @@
             </h1>
         </div>
         
-        <!-- Combined Time and Toilet Status Container -->
+        <!-- Main Info Row -->
         <div class="flex justify-between items-center my-6">
-            
-            <!-- Left Side: Toilet Sign -->
-            <div class="w-[100px] flex justify-center"> <!-- Fixed width wrapper to hold space -->
-                 <div id="toilet-status" class="sign-container">
-                    <!-- The white octagon outline -->
+            <!-- Left: Toilet Sign -->
+            <div class="w-[120px] flex justify-center">
+                 <div id="toilet-status" class="sign-container invisible">
                     <div class="octagon outline"></div>
-                    <!-- The inner red octagon which holds the text -->
                     <div class="octagon inner-sign">
                         <span class="sign-text">TOILET</span>
                     </div>
                 </div>
             </div>
 
-            <!-- Center: Time and Date -->
+            <!-- Center: Live Clock -->
             <div class="text-center">
-                <h2 id="time-display" class="font-black text-9xl leading-none text-gray-900 dark:text-white">
-                    --:--:-- --
-                </h2>
-                <p id="date-display" class="text-4xl text-gray-800 dark:text-gray-100 mt-4">
-                    ---
-                </p>
+                <h2 id="time-display" class="font-black text-9xl leading-none text-gray-900 dark:text-white">--:--:-- --</h2>
+                <p id="date-display" class="text-4xl text-gray-800 dark:text-gray-100 mt-4">---</p>
             </div>
 
-            <!-- Right side: Invisible placeholder to balance the layout and keep time centered -->
-            <div class="w-[100px]"></div>
+            <!-- Right: 15 Mins Remaining -->
+            <div class="w-[120px] flex justify-center">
+                <div id="fifteen-min-alert" class="timer-mini invisible urgent-pulse">
+                    <svg viewBox="0 0 160 160" class="w-full h-full">
+                        <circle class="circle-bg" cx="80" cy="80" r="70"></circle>
+                        <circle class="circle-progress" cx="80" cy="80" r="70"></circle>
+                    </svg>
+                    <div class="timer-content">
+                        <span class="timer-num">15</span>
+                        <span class="timer-label">Mins</span>
+                    </div>
+                </div>
+            </div>
         </div>
         
         <hr class="my-8 border-gray-200 dark:border-gray-700">
 
-        <!-- Exam Details -->
+        <!-- Exam Timings Grid -->
         <div class="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-y-4 gap-x-8 text-center">
             <div>
                 <p class="text-4xl font-normal uppercase tracking-wider text-gray-800 dark:text-gray-100">Start Time</p>
@@ -178,205 +208,143 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // =================================================================
-            // SCRIPT OVERVIEW
-            // This script powers an interactive exam display. Its main jobs are:
-            // 1. Display a live, ticking clock and the current date.
-            // 2. Allow users to edit the exam subject, start time, and duration.
-            // 3. Automatically calculate and display the exam's end time.
-            // 4. Show a "Toilet" status that appears only during restricted periods.
-            // 5. Handle theme (light/dark), fullscreen, and save-as-HTML functionalities.
-            // =================================================================
-
-            // =================================================================
-            // 1. DOM ELEMENT REFERENCES & CONFIGURATION
-            // =================================================================
             const timeDisplay = document.getElementById('time-display');
             const dateDisplay = document.getElementById('date-display');
             const durationEl = document.getElementById('duration');
             const startTimeEl = document.getElementById('start-time');
             const endTimeEl = document.getElementById('end-time');
             const toiletStatus = document.getElementById('toilet-status');
+            const fifteenAlert = document.getElementById('fifteen-min-alert');
             const themeToggleBtn = document.getElementById('theme-toggle');
-            const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
-            const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
             const saveBtn = document.getElementById('save-button');
             const fullscreenBtn = document.getElementById('fullscreen-button');
-            const fullscreenEnterIcon = document.getElementById('fullscreen-enter-icon');
-            const fullscreenExitIcon = document.getElementById('fullscreen-exit-icon');
 
-            // Date/Time formatting options, defined once for consistency and performance.
             const TIME_OPTIONS = { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true };
             const DATE_OPTIONS = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
 
-            // Holds pre-calculated timestamps to avoid re-parsing on every clock tick.
             let examState = {
-                totalMinutes: NaN,
-                firstAllowedTimestamp: null,
-                lastAllowedTimestamp: null,
+                totalMinutes: 0,
+                startTimestamp: null,
+                endTimestamp: null,
+                toiletFirstEnd: null,
+                toiletLastStart: null
             };
 
-            // =================================================================
-            // 2. CORE LOGIC (PARSING & CALCULATION)
-            // =================================================================
-            
-            /** Parses "2 Hours 30 Minutes" into total minutes. */
-            const parseDuration = (durationStr) => {
-                let totalMinutes = 0;
-                const hoursMatch = durationStr.match(/(\d+)\s*Hours?/i);
-                const minutesMatch = durationStr.match(/(\d+)\s*Minutes?/i);
-                if (hoursMatch) totalMinutes += parseInt(hoursMatch[1], 10) * 60;
-                if (minutesMatch) totalMinutes += parseInt(minutesMatch[1], 10);
-                return totalMinutes;
+            const parseDuration = (str) => {
+                let total = 0;
+                const h = str.match(/(\d+)\s*H/i);
+                const m = str.match(/(\d+)\s*M/i);
+                if (h) total += parseInt(h[1]) * 60;
+                if (m) total += parseInt(m[1]);
+                return total;
             };
 
-            /** Parses "9:00 AM" into a Date object for today. */
-            const parseStartTime = (timeStr) => {
-                const timeParts = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
-                if (!timeParts) return null;
-                let hours = parseInt(timeParts[1], 10);
-                const minutes = parseInt(timeParts[2], 10);
-                const ampm = timeParts[3].toUpperCase();
-                if (ampm === 'PM' && hours < 12) hours += 12;
-                if (ampm === 'AM' && hours === 12) hours = 0; // Midnight case
-                const startTime = new Date();
-                startTime.setHours(hours, minutes, 0, 0);
-                return startTime;
+            const parseStartTime = (str) => {
+                const match = str.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+                if (!match) return null;
+                let hrs = parseInt(match[1]);
+                const mins = parseInt(match[2]);
+                const pm = match[3].toUpperCase() === 'PM';
+                if (pm && hrs < 12) hrs += 12;
+                if (!pm && hrs === 12) hrs = 0;
+                const d = new Date();
+                d.setHours(hrs, mins, 0, 0);
+                return d;
             };
 
-            /** Recalculates all exam timings and updates the global examState. */
             const updateExamTimings = () => {
-                const totalMinutes = parseDuration(durationEl.textContent.trim());
-                const startTime = parseStartTime(startTimeEl.textContent.trim());
+                const total = parseDuration(durationEl.textContent.trim());
+                const start = parseStartTime(startTimeEl.textContent.trim());
 
-                if (!startTime || isNaN(totalMinutes) || totalMinutes <= 0) {
-                    Object.assign(examState, { totalMinutes: NaN, firstAllowedTimestamp: null, lastAllowedTimestamp: null });
+                if (!start || isNaN(total) || total <= 0) {
                     endTimeEl.textContent = 'Invalid Input';
-                    endTimeEl.classList.add('text-red-500');
                     return;
                 }
                 
-                const endTime = new Date(startTime.getTime() + totalMinutes * 60000);
-                Object.assign(examState, {
-                    totalMinutes,
-                    firstAllowedTimestamp: startTime.getTime() + 30 * 60000,
-                    lastAllowedTimestamp: endTime.getTime() - 30 * 60000,
-                });
+                const end = new Date(start.getTime() + total * 60000);
+                examState = {
+                    totalMinutes: total,
+                    startTimestamp: start.getTime(),
+                    endTimestamp: end.getTime(),
+                    toiletFirstEnd: start.getTime() + 30 * 60000,
+                    toiletLastStart: end.getTime() - 30 * 60000
+                };
 
-                endTimeEl.textContent = endTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-                endTimeEl.classList.remove('text-red-500');
+                endTimeEl.textContent = end.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
             };
 
-            // =================================================================
-            // 3. UI DISPLAY & EVENT HANDLERS
-            // =================================================================
-
-            /** Updates the live clock, date, and toilet status display. */
             const updateLiveDisplays = () => {
                 const now = new Date();
+                const nowTs = now.getTime();
                 timeDisplay.textContent = now.toLocaleTimeString('en-US', TIME_OPTIONS);
                 dateDisplay.textContent = now.toLocaleDateString('en-GB', DATE_OPTIONS);
                 
-                const { totalMinutes, firstAllowedTimestamp, lastAllowedTimestamp } = examState;
-                const nowTimestamp = now.getTime();
+                // NO TOILET LOGIC (Displayed when toilet is NOT allowed)
+                let showSign = false;
                 
-                const isToiletAllowed = (
-                    totalMinutes > 60 &&
-                    firstAllowedTimestamp &&
-                    lastAllowedTimestamp &&
-                    nowTimestamp > firstAllowedTimestamp &&
-                    nowTimestamp < lastAllowedTimestamp
-                );
-                
-                // The toilet status is made invisible when allowed, and visible when not allowed.
-                // This prevents the layout from shifting.
-                toiletStatus.classList.toggle('invisible', isToiletAllowed);
-            };
-
-            /** Toggles the visibility of two paired icons. */
-            const toggleIconVisibility = (iconToShow, iconToHide) => {
-                iconToShow.classList.remove('hidden');
-                iconToHide.classList.add('hidden');
-            };
-            
-            /** Applies the theme and updates the icon. */
-            const applyTheme = (theme) => {
-                const isDark = theme === 'dark';
-                document.documentElement.classList.toggle('dark', isDark);
-                toggleIconVisibility(isDark ? themeToggleLightIcon : themeToggleDarkIcon, isDark ? themeToggleDarkIcon : themeToggleLightIcon);
-            };
-
-            /** Generates a fully interactive HTML file and triggers a download. */
-            const saveStateAsHtml = () => {
-                const docClone = document.documentElement.cloneNode(true);
-                const subject = document.getElementById('subject').textContent;
-                
-                // Set the current values in the clone for accurate saving.
-                docClone.querySelector('#subject').textContent = subject;
-                docClone.querySelector('#start-time').textContent = startTimeEl.textContent;
-                docClone.querySelector('#duration').textContent = durationEl.textContent;
-
-                const fileContent = '<!DOCTYPE html>\n' + docClone.outerHTML;
-                const blob = new Blob([fileContent], { type: 'text/html' });
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                const safeFilename = subject.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-                link.download = `exam-display-${safeFilename}.html`;
-                link.click();
-                URL.revokeObjectURL(link.href);
-                link.remove();
-            };
-            
-            // =================================================================
-            // 4. INITIALIZATION
-            // =================================================================
-
-            /** Sets up all event listeners for the application's interactive elements. */
-            const setupEventListeners = () => {
-                themeToggleBtn.addEventListener('click', () => {
-                    const newTheme = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
-                    localStorage.setItem('color-theme', newTheme);
-                    applyTheme(newTheme);
-                });
-
-                saveBtn.addEventListener('click', saveStateAsHtml);
-
-                fullscreenBtn.addEventListener('click', () => {
-                    if (!document.fullscreenElement) {
-                        document.documentElement.requestFullscreen();
-                    } else if (document.exitFullscreen) {
-                        document.exitFullscreen();
+                if (examState.startTimestamp && nowTs >= examState.startTimestamp && nowTs < examState.endTimestamp) {
+                    if (examState.totalMinutes < 60) {
+                        showSign = true;
+                    } else {
+                        const isFirst30 = nowTs < examState.toiletFirstEnd;
+                        const isLast30 = nowTs >= examState.toiletLastStart;
+                        showSign = isFirst30 || isLast30;
                     }
-                });
+                }
+                
+                toiletStatus.classList.toggle('invisible', !showSign);
 
-                document.addEventListener('fullscreenchange', () => {
-                    const isFullscreen = !!document.fullscreenElement;
-                    toggleIconVisibility(isFullscreen ? fullscreenExitIcon : fullscreenEnterIcon, isFullscreen ? fullscreenEnterIcon : fullscreenExitIcon);
-                });
-
-                // Recalculate timings whenever the user edits the inputs.
-                durationEl.addEventListener('input', updateExamTimings);
-                startTimeEl.addEventListener('input', updateExamTimings);
-            };
-            
-            /** Main function to initialize the application. */
-            const initialize = () => {
-                const currentTheme = localStorage.getItem('color-theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-                applyTheme(currentTheme);
-                
-                setupEventListeners();
-                
-                updateExamTimings();
-                updateLiveDisplays();
-                toggleIconVisibility(fullscreenEnterIcon, fullscreenExitIcon);
-                
-                // Start the main clock loop.
-                setInterval(updateLiveDisplays, 1000);
+                // 15 Min Warning logic
+                const msToEnd = examState.endTimestamp - nowTs;
+                const minsToEnd = msToEnd / 60000;
+                const show15Alert = minsToEnd > 0 && minsToEnd <= 15.1;
+                fifteenAlert.classList.toggle('invisible', !show15Alert);
             };
 
-            initialize();
+            const applyTheme = (t) => {
+                const dark = t === 'dark';
+                document.documentElement.classList.toggle('dark', dark);
+                document.getElementById('theme-toggle-light-icon').classList.toggle('hidden', !dark);
+                document.getElementById('theme-toggle-dark-icon').classList.toggle('hidden', dark);
+            };
+
+            themeToggleBtn.addEventListener('click', () => {
+                const t = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
+                localStorage.setItem('color-theme', t);
+                applyTheme(t);
+            });
+
+            saveBtn.addEventListener('click', () => {
+                const content = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+                const blob = new Blob([content], { type: 'text/html' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = `exam-display.html`;
+                a.click();
+            });
+
+            fullscreenBtn.addEventListener('click', () => {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen();
+                } else {
+                    document.exitFullscreen();
+                }
+            });
+
+            document.addEventListener('fullscreenchange', () => {
+                const fs = !!document.fullscreenElement;
+                document.getElementById('fullscreen-exit-icon').classList.toggle('hidden', !fs);
+                document.getElementById('fullscreen-enter-icon').classList.toggle('hidden', fs);
+            });
+
+            durationEl.addEventListener('input', updateExamTimings);
+            startTimeEl.addEventListener('input', updateExamTimings);
+
+            applyTheme(localStorage.getItem('color-theme') || 'light');
+            updateExamTimings();
+            setInterval(updateLiveDisplays, 1000);
+            updateLiveDisplays();
         });
     </script>
-
 </body>
 </html>
