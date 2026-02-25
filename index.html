@@ -297,7 +297,7 @@
                 // 15 Min Warning logic
                 const msToEnd = examState.endTimestamp - nowTs;
                 const minsToEnd = msToEnd / 60000;
-                const show15Alert = minsToEnd > 0 && minsToEnd <= 15.1;
+                const show15Alert = minsToEnd > 0 && minsToEnd <= 15;
                 fifteenAlert.classList.toggle('invisible', !show15Alert);
             };
 
